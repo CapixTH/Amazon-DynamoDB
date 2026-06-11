@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/CapixTH/Amazon-DynamoDB#readme",
   "dependencies": {
+    "dynamoose": "^4.2.0",
     "express": "^5.2.1"
   }
 }
