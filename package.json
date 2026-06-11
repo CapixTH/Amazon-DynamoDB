@@ -1,0 +1,24 @@
+{
+  "name": "amazon-dynamodb",
+  "version": "1.0.0",
+  "description": "- Antonio Crivelari\r - Guilherme Batista\r - Gabriel Viana\r - Gabriel Vieira\r - João Victor Sobreira\r - Mateus Xavier",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CapixTH/Amazon-DynamoDB.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/CapixTH/Amazon-DynamoDB/issues"
+  },
+  "homepage": "https://github.com/CapixTH/Amazon-DynamoDB#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
