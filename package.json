@@ -4,6 +4,7 @@
   "description": "- Antonio Crivelari\r - Guilherme Batista\r - Gabriel Viana\r - Gabriel Vieira\r - João Victor Sobreira\r - Mateus Xavier",
   "main": "index.js",
   "scripts": {
+    "start": "node src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,6 +20,7 @@
   },
   "homepage": "https://github.com/CapixTH/Amazon-DynamoDB#readme",
   "dependencies": {
+    "dotenv": "^17.4.2",
     "dynamoose": "^4.2.0",
     "express": "^5.2.1",
     "swagger-jsdoc": "^6.3.0",
