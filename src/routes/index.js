@@ -1,5 +1,6 @@
 import { Router } from "express";
 import alunoRoutes from "./alunoRoutes.js";
+import cursoRoutes from "./cursoRoutes.js";
 
 const router = Router();
 
@@ -17,5 +18,6 @@ router.get("/", (req, res) => {
 });
 
 router.use("/api", alunoRoutes);
+router.use("/api", cursoRoutes);
 
 export default router;
