@@ -5,6 +5,9 @@ import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger.js";
 import routes from "./routes/index.js";
 import "./config/dynamodb.js";
+import "./models/Aluno.js";
+import "./models/Curso.js";
+import "./models/Matricula.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
