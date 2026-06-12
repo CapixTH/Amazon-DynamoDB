@@ -63,11 +63,39 @@ router.post("/matriculas", createMatricula);
  * @swagger
  * /api/matriculas:
  *   get:
- *     summary: Lista todas as matrículas
+ *     summary: Lista todas as matrículas com filtros opcionais
  *     tags: [Matriculas]
+ *     parameters:
+ *       - in: query
+ *         name: alunoId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filtra matrículas por ID do aluno
+ *       - in: query
+ *         name: cursoId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filtra matrículas por ID do curso
+ *       - in: query
+ *         name: situacao
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [ATIVA, TRANCADA, CANCELADA, CONCLUIDA]
+ *         description: Filtra matrículas por situação
+ *       - in: query
+ *         name: numeroMatricula
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filtra matrículas por número exato
  *     responses:
  *       200:
  *         description: Lista de matrículas
+ *       400:
+ *         description: Filtro inválido
  */
 router.get("/matriculas", getAllMatriculas);
 

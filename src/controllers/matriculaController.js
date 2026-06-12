@@ -150,7 +150,45 @@ export const createMatricula = async (req, res) => {
 
 export const getAllMatriculas = async (req, res) => {
   try {
-    const matriculas = await Matricula.scan().exec();
+    const { alunoId, cursoId, situacao, numeroMatricula } = req.query;
+
+    let matriculas = await Matricula.scan().exec();
+
+    if (situacao) {
+      if (!isValidSituacao(situacao)) {
+        return res.status(400).json({
+          message: "Situação da matrícula inválida.",
+        });
+      }
+
+      matriculas = matriculas.filter(
+        (matricula) => matricula.situacao === situacao,
+      );
+    }
+
+    if (alunoId) {
+      const normalizedAlunoId = alunoId.trim();
+
+      matriculas = matriculas.filter(
+        (matricula) => matricula.alunoId === normalizedAlunoId,
+      );
+    }
+
+    if (cursoId) {
+      const normalizedCursoId = cursoId.trim();
+
+      matriculas = matriculas.filter(
+        (matricula) => matricula.cursoId === normalizedCursoId,
+      );
+    }
+
+    if (numeroMatricula) {
+      const normalizedNumeroMatricula = numeroMatricula.trim().toUpperCase();
+
+      matriculas = matriculas.filter(
+        (matricula) => matricula.numeroMatricula === normalizedNumeroMatricula,
+      );
+    }
 
     return res.status(200).json(matriculas);
   } catch (error) {
