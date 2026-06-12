@@ -96,11 +96,47 @@ router.post("/cursos", createCurso);
  * @swagger
  * /api/cursos:
  *   get:
- *     summary: Lista todos os cursos
+ *     summary: Lista todos os cursos com filtros opcionais
  *     tags: [Cursos]
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [ATIVO, INATIVO]
+ *         description: Filtra cursos por status
+ *       - in: query
+ *         name: modalidade
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [PRESENCIAL, EAD, HIBRIDO]
+ *         description: Filtra cursos por modalidade
+ *       - in: query
+ *         name: turno
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [MATUTINO, VESPERTINO, NOTURNO, INTEGRAL]
+ *         description: Filtra cursos por turno
+ *       - in: query
+ *         name: areaConhecimento
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filtra cursos por área do conhecimento parcial
+ *       - in: query
+ *         name: nome
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filtra cursos por nome parcial
  *     responses:
  *       200:
  *         description: Lista de cursos
+ *       400:
+ *         description: Filtro inválido
  */
 router.get("/cursos", getAllCursos);
 

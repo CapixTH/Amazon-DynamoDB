@@ -195,7 +195,60 @@ export const createCurso = async (req, res) => {
 
 export const getAllCursos = async (req, res) => {
   try {
-    const cursos = await Curso.scan().exec();
+    const { status, modalidade, turno, areaConhecimento, nome } = req.query;
+
+    let cursos = await Curso.scan().exec();
+
+    if (status) {
+      if (!isValidEnumValue(StatusCurso, status)) {
+        return res.status(400).json({
+          message: "Status do curso inválido.",
+        });
+      }
+
+      cursos = cursos.filter((curso) => curso.status === status);
+    }
+
+    if (modalidade) {
+      if (!isValidEnumValue(ModalidadeCurso, modalidade)) {
+        return res.status(400).json({
+          message: "Modalidade do curso inválida.",
+        });
+      }
+
+      cursos = cursos.filter((curso) => curso.modalidade === modalidade);
+    }
+
+    if (turno) {
+      if (!isValidEnumValue(TurnoCurso, turno)) {
+        return res.status(400).json({
+          message: "Turno do curso inválido.",
+        });
+      }
+
+      cursos = cursos.filter((curso) => curso.turno === turno);
+    }
+
+    if (areaConhecimento) {
+      const areaConhecimentoNormalized = areaConhecimento.trim().toLowerCase();
+
+      cursos = cursos.filter(
+        (curso) =>
+          curso.areaConhecimento &&
+          curso.areaConhecimento
+            .toLowerCase()
+            .includes(areaConhecimentoNormalized),
+      );
+    }
+
+    if (nome) {
+      const nomeNormalized = nome.trim().toLowerCase();
+
+      cursos = cursos.filter(
+        (curso) =>
+          curso.nome && curso.nome.toLowerCase().includes(nomeNormalized),
+      );
+    }
 
     return res.status(200).json(cursos);
   } catch (error) {
