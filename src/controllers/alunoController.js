@@ -135,7 +135,49 @@ export const createAluno = async (req, res) => {
 
 export const getAllAlunos = async (req, res) => {
   try {
-    const alunos = await Aluno.scan().exec();
+    const { status, nome, email, registroAcademico } = req.query;
+
+    let alunos = await Aluno.scan().exec();
+
+    if (status) {
+      if (!isValidStatus(status)) {
+        return res.status(400).json({
+          message: "Status do aluno inválido.",
+        });
+      }
+
+      alunos = alunos.filter((aluno) => aluno.status === status);
+    }
+
+    if (registroAcademico) {
+      const registroAcademicoNormalized = registroAcademico
+        .trim()
+        .toLowerCase();
+
+      alunos = alunos.filter(
+        (aluno) =>
+          aluno.registroAcademico &&
+          aluno.registroAcademico.toLowerCase() === registroAcademicoNormalized,
+      );
+    }
+
+    if (nome) {
+      const nomeNormalized = nome.trim().toLowerCase();
+
+      alunos = alunos.filter(
+        (aluno) =>
+          aluno.nome && aluno.nome.toLowerCase().includes(nomeNormalized),
+      );
+    }
+
+    if (email) {
+      const emailNormalized = email.trim().toLowerCase();
+
+      alunos = alunos.filter(
+        (aluno) =>
+          aluno.email && aluno.email.toLowerCase().includes(emailNormalized),
+      );
+    }
 
     return res.status(200).json(alunos);
   } catch (error) {

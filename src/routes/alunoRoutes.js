@@ -74,11 +74,39 @@ router.post("/alunos", createAluno);
  * @swagger
  * /api/alunos:
  *   get:
- *     summary: Lista todos os alunos
+ *     summary: Lista todos os alunos com filtros opcionais
  *     tags: [Alunos]
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [ATIVO, INATIVO, FORMADO, EVADIDO]
+ *         description: Filtra alunos por status
+ *       - in: query
+ *         name: nome
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filtra alunos por nome parcial
+ *       - in: query
+ *         name: email
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filtra alunos por e-mail parcial
+ *       - in: query
+ *         name: registroAcademico
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filtra alunos por registro acadêmico exato
  *     responses:
  *       200:
  *         description: Lista de alunos
+ *       400:
+ *         description: Filtro inválido
  */
 router.get("/alunos", getAllAlunos);
 
