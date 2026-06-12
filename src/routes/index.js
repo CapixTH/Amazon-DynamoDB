@@ -1,4 +1,5 @@
 import { Router } from "express";
+import alunoRoutes from "./alunoRoutes.js";
 
 const router = Router();
 
@@ -14,5 +15,7 @@ const router = Router();
 router.get("/", (req, res) => {
   res.send("Hello World!");
 });
+
+router.use("/api", alunoRoutes);
 
 export default router;
