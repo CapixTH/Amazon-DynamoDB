@@ -9,6 +9,13 @@ function isValidSituacao(situacao) {
   return Object.values(SituacaoMatricula).includes(situacao);
 }
 
+function isAfterDate(startDate, endDate) {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+
+  return end > start;
+}
+
 export const createMatricula = async (req, res) => {
   try {
     const {
@@ -61,7 +68,28 @@ export const createMatricula = async (req, res) => {
       });
     }
 
-    const aluno = await Aluno.get(alunoId);
+    if (!isAfterDate(dataMatricula, dataPrevistaConclusao)) {
+      return res.status(400).json({
+        message:
+          "A data prevista de conclusão deve ser posterior à data da matrícula.",
+      });
+    }
+
+    const normalizedAlunoId = alunoId.trim();
+    const normalizedCursoId = cursoId.trim();
+    const normalizedNumeroMatricula = numeroMatricula.trim().toUpperCase();
+
+    const existingMatriculaByNumero = await Matricula.scan("numeroMatricula")
+      .eq(normalizedNumeroMatricula)
+      .exec();
+
+    if (existingMatriculaByNumero.count > 0) {
+      return res.status(409).json({
+        message: "Já existe uma matrícula cadastrada com este número.",
+      });
+    }
+
+    const aluno = await Aluno.get(normalizedAlunoId);
 
     if (!aluno) {
       return res.status(404).json({
@@ -69,7 +97,7 @@ export const createMatricula = async (req, res) => {
       });
     }
 
-    const curso = await Curso.get(cursoId);
+    const curso = await Curso.get(normalizedCursoId);
 
     if (!curso) {
       return res.status(404).json({
@@ -77,11 +105,32 @@ export const createMatricula = async (req, res) => {
       });
     }
 
+    if (periodoAtual > curso.duracaoSemestres) {
+      return res.status(400).json({
+        message:
+          "O período atual não pode ser maior que a duração do curso em semestres.",
+      });
+    }
+
+    const existingActiveMatricula = await Matricula.scan("alunoId")
+      .eq(normalizedAlunoId)
+      .where("cursoId")
+      .eq(normalizedCursoId)
+      .where("situacao")
+      .eq("ATIVA")
+      .exec();
+
+    if (situacao === "ATIVA" && existingActiveMatricula.count > 0) {
+      return res.status(409).json({
+        message: "O aluno já possui uma matrícula ativa para este curso.",
+      });
+    }
+
     const matriculaData = {
       id: crypto.randomUUID(),
-      alunoId: alunoId.trim(),
-      cursoId: cursoId.trim(),
-      numeroMatricula: numeroMatricula.trim(),
+      alunoId: normalizedAlunoId,
+      cursoId: normalizedCursoId,
+      numeroMatricula: normalizedNumeroMatricula,
       dataMatricula,
       situacao,
       periodoAtual,

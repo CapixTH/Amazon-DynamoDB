@@ -13,6 +13,8 @@ function validateDisciplinas(disciplinas) {
     return "O curso deve possuir ao menos uma disciplina.";
   }
 
+  const codigos = new Set();
+
   for (const disciplina of disciplinas) {
     const { codigo, nome, periodo, cargaHoraria, obrigatoria, preRequisitos } =
       disciplina;
@@ -45,6 +47,28 @@ function validateDisciplinas(disciplinas) {
         !preRequisitos.every((item) => typeof item === "string"))
     ) {
       return "O campo preRequisitos deve ser uma lista de strings.";
+    }
+
+    const normalizedCodigo = codigo.trim().toUpperCase();
+
+    if (codigos.has(normalizedCodigo)) {
+      return `Código de disciplina duplicado encontrado: ${normalizedCodigo}.`;
+    }
+
+    codigos.add(normalizedCodigo);
+  }
+
+  for (const disciplina of disciplinas) {
+    const preRequisitos = Array.isArray(disciplina.preRequisitos)
+      ? disciplina.preRequisitos
+      : [];
+
+    for (const preRequisito of preRequisitos) {
+      const normalizedPreRequisito = preRequisito.trim().toUpperCase();
+
+      if (!codigos.has(normalizedPreRequisito)) {
+        return `Pré-requisito não encontrado entre as disciplinas do curso: ${normalizedPreRequisito}.`;
+      }
     }
   }
 
@@ -143,13 +167,13 @@ export const createCurso = async (req, res) => {
       status,
       disciplinas: disciplinas.map((disciplina) => ({
         id: disciplina.id || crypto.randomUUID(),
-        codigo: disciplina.codigo.trim(),
+        codigo: disciplina.codigo.trim().toUpperCase(),
         nome: disciplina.nome.trim(),
         periodo: disciplina.periodo,
         cargaHoraria: disciplina.cargaHoraria,
         obrigatoria: disciplina.obrigatoria,
         preRequisitos: Array.isArray(disciplina.preRequisitos)
-          ? disciplina.preRequisitos.map((item) => item.trim())
+          ? disciplina.preRequisitos.map((item) => item.trim().toUpperCase())
           : [],
       })),
     };
