@@ -20,6 +20,8 @@
   "homepage": "https://github.com/CapixTH/Amazon-DynamoDB#readme",
   "dependencies": {
     "dynamoose": "^4.2.0",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
   }
 }
