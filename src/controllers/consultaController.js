@@ -29,6 +29,7 @@ export const getAlunosAtivosResumo = async (req, res) => {
       email: aluno.email,
       registroAcademico: aluno.registroAcademico,
       status: aluno.status,
+      endereco: aluno.endereco,
     }));
 
     return res.status(200).json({
@@ -80,7 +81,7 @@ export const getMatriculasDetalhadas = async (req, res) => {
               }
             : null,
         };
-      })
+      }),
     );
 
     return res.status(200).json({
@@ -113,7 +114,7 @@ export const getDisciplinasPorPeriodo = async (req, res) => {
         cargaHoraria: disciplina.cargaHoraria,
         obrigatoria: disciplina.obrigatoria,
         preRequisitos: disciplina.preRequisitos || [],
-      }))
+      })),
     );
 
     const agrupado = Object.values(
@@ -141,7 +142,7 @@ export const getDisciplinasPorPeriodo = async (req, res) => {
         });
 
         return acc;
-      }, {})
+      }, {}),
     ).sort((a, b) => a.periodo - b.periodo);
 
     return res.status(200).json({
@@ -154,6 +155,135 @@ export const getDisciplinasPorPeriodo = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: "Erro ao consultar disciplinas por período.",
+      error: error.message,
+    });
+  }
+};
+
+export const getCursosPorDisciplina = async (req, res) => {
+  try {
+    const { nome, codigo } = req.query;
+
+    if (!nome && !codigo) {
+      return res.status(400).json({
+        message: "Informe ao menos um parâmetro de busca: nome ou codigo.",
+      });
+    }
+
+    const nomeNormalizado = nome ? nome.trim().toLowerCase() : null;
+    const codigoNormalizado = codigo ? codigo.trim().toUpperCase() : null;
+
+    const cursos = await Curso.scan().exec();
+
+    const resultado = cursos
+      .map((curso) => {
+        const disciplinasFiltradas = (curso.disciplinas || []).filter(
+          (disciplina) => {
+            const matchNome = nomeNormalizado
+              ? disciplina.nome &&
+                disciplina.nome.toLowerCase().includes(nomeNormalizado)
+              : true;
+
+            const matchCodigo = codigoNormalizado
+              ? disciplina.codigo &&
+                disciplina.codigo.toUpperCase() === codigoNormalizado
+              : true;
+
+            return matchNome && matchCodigo;
+          },
+        );
+
+        if (disciplinasFiltradas.length === 0) {
+          return null;
+        }
+
+        return {
+          cursoId: curso.id,
+          cursoNome: curso.nome,
+          modalidade: curso.modalidade,
+          turno: curso.turno,
+          status: curso.status,
+          disciplinasEncontradas: disciplinasFiltradas,
+        };
+      })
+      .filter(Boolean);
+
+    return res.status(200).json({
+      descricao:
+        "Consulta de cursos a partir de disciplina informada, utilizando busca em arrays e subdocumentos no DynamoDB.",
+      filtros: {
+        nome: nome || null,
+        codigo: codigo || null,
+      },
+      totalCursosEncontrados: resultado.length,
+      dados: resultado,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erro ao consultar cursos por disciplina.",
+      error: error.message,
+    });
+  }
+};
+
+export const getAlunosPorEndereco = async (req, res) => {
+  try {
+    const { rua, bairro, cep, numero } = req.query;
+
+    if (!rua && !bairro && !cep && !numero) {
+      return res.status(400).json({
+        message:
+          "Informe ao menos um parâmetro de busca: rua, bairro, cep ou numero.",
+      });
+    }
+
+    const ruaNormalizada = rua ? rua.trim().toLowerCase() : null;
+    const bairroNormalizado = bairro ? bairro.trim().toLowerCase() : null;
+    const cepNormalizado = cep ? cep.trim() : null;
+    const numeroNormalizado = numero ? String(numero).trim().toLowerCase() : null;
+
+    const alunos = await Aluno.scan().exec();
+
+    const resultado = alunos.filter((aluno) => {
+      const endereco = aluno.endereco || {};
+
+      const matchRua = ruaNormalizada
+        ? endereco.rua &&
+          endereco.rua.toLowerCase().includes(ruaNormalizada)
+        : true;
+
+      const matchBairro = bairroNormalizado
+        ? endereco.bairro &&
+          endereco.bairro.toLowerCase().includes(bairroNormalizado)
+        : true;
+
+      const matchCep = cepNormalizado
+        ? endereco.cep === cepNormalizado
+        : true;
+
+      const matchNumero = numeroNormalizado
+        ? endereco.numero &&
+          String(endereco.numero).toLowerCase() === numeroNormalizado
+        : true;
+
+      return matchRua && matchBairro && matchCep && matchNumero;
+    });
+
+    return res.status(200).json({
+      descricao:
+        "Consulta de alunos por endereço informado, utilizando busca em subdocumentos no DynamoDB.",
+      filtros: {
+        rua: rua || null,
+        bairro: bairro || null,
+        cep: cep || null,
+        numero: numero || null,
+      },
+      total: resultado.length,
+      dados: resultado,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erro ao consultar alunos por endereço.",
       error: error.message,
     });
   }
