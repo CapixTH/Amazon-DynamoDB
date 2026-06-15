@@ -19,5 +19,8 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(routes);
 
 app.listen(PORT, () => {
-  console.log(`Aplicação rodando na porta ${PORT}`);
+  const baseUrl = `http://localhost:${PORT}`;
+
+  console.log(`Aplicação rodando em: ${baseUrl}`);
+  console.log(`Swagger disponível em: ${baseUrl}/api-docs`);
 });

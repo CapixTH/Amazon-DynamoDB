@@ -10,13 +10,18 @@ const router = Router();
  * @swagger
  * /:
  *   get:
- *     summary: Retorna mensagem inicial da API
+ *     summary: Health check da API
+ *     tags: [Health Check]
  *     responses:
  *       200:
  *         description: Resposta com sucesso
  */
 router.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.status(200).json({
+    status: "ok",
+    service: "Amazon-DynamoDB API",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 router.use("/api", alunoRoutes);
