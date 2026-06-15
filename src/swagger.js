@@ -13,6 +13,27 @@ const swaggerDefinition = {
       description: "Servidor local",
     },
   ],
+  tags: [
+    {
+      name: "Health Check",
+    },
+    {
+      name: "Alunos",
+      description: "Operações relacionadas aos alunos",
+    },
+    {
+      name: "Cursos",
+      description: "Operações relacionadas aos cursos",
+    },
+    {
+      name: "Matriculas",
+      description: "Operações relacionadas às matrículas",
+    },
+    {
+      name: "Consultas",
+      description: "Consultas demonstrativas e complexas",
+    },
+  ],
 };
 
 const options = {
@@ -21,7 +42,5 @@ const options = {
 };
 
 const swaggerSpec = swaggerJSDoc(options);
-
-console.log(swaggerSpec.paths);
 
 export default swaggerSpec;
