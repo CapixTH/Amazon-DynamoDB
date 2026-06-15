@@ -240,7 +240,9 @@ export const getAlunosPorEndereco = async (req, res) => {
     const ruaNormalizada = rua ? rua.trim().toLowerCase() : null;
     const bairroNormalizado = bairro ? bairro.trim().toLowerCase() : null;
     const cepNormalizado = cep ? cep.trim() : null;
-    const numeroNormalizado = numero ? String(numero).trim().toLowerCase() : null;
+    const numeroNormalizado = numero
+      ? String(numero).trim().toLowerCase()
+      : null;
 
     const alunos = await Aluno.scan().exec();
 
@@ -248,8 +250,7 @@ export const getAlunosPorEndereco = async (req, res) => {
       const endereco = aluno.endereco || {};
 
       const matchRua = ruaNormalizada
-        ? endereco.rua &&
-          endereco.rua.toLowerCase().includes(ruaNormalizada)
+        ? endereco.rua && endereco.rua.toLowerCase().includes(ruaNormalizada)
         : true;
 
       const matchBairro = bairroNormalizado
@@ -257,9 +258,7 @@ export const getAlunosPorEndereco = async (req, res) => {
           endereco.bairro.toLowerCase().includes(bairroNormalizado)
         : true;
 
-      const matchCep = cepNormalizado
-        ? endereco.cep === cepNormalizado
-        : true;
+      const matchCep = cepNormalizado ? endereco.cep === cepNormalizado : true;
 
       const matchNumero = numeroNormalizado
         ? endereco.numero &&
@@ -284,6 +283,204 @@ export const getAlunosPorEndereco = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: "Erro ao consultar alunos por endereço.",
+      error: error.message,
+    });
+  }
+};
+
+export const getMatriculasAgrupadasPorSituacao = async (req, res) => {
+  try {
+    const { situacao } = req.query;
+
+    let matriculas = await Matricula.scan().exec();
+
+    if (situacao) {
+      const situacaoNormalizada = situacao.trim().toUpperCase();
+
+      matriculas = matriculas.filter(
+        (matricula) => matricula.situacao === situacaoNormalizada,
+      );
+    }
+
+    const matriculasDetalhadas = await Promise.all(
+      matriculas.map(async (matricula) => {
+        const aluno = await Aluno.get(matricula.alunoId);
+        const curso = await Curso.get(matricula.cursoId);
+
+        return {
+          id: matricula.id,
+          numeroMatricula: matricula.numeroMatricula,
+          situacao: matricula.situacao,
+          dataMatricula: matricula.dataMatricula,
+          periodoAtual: matricula.periodoAtual,
+          aluno: aluno
+            ? {
+                id: aluno.id,
+                nome: aluno.nome,
+                email: aluno.email,
+                status: aluno.status,
+                endereco: aluno.endereco,
+              }
+            : null,
+          curso: curso
+            ? {
+                id: curso.id,
+                nome: curso.nome,
+                modalidade: curso.modalidade,
+                turno: curso.turno,
+                status: curso.status,
+              }
+            : null,
+        };
+      }),
+    );
+
+    const agrupado = Object.values(
+      matriculasDetalhadas.reduce((acc, matricula) => {
+        const chave = matricula.situacao;
+
+        if (!acc[chave]) {
+          acc[chave] = {
+            situacao: matricula.situacao,
+            totalMatriculas: 0,
+            matriculas: [],
+          };
+        }
+
+        acc[chave].totalMatriculas += 1;
+        acc[chave].matriculas.push(matricula);
+
+        return acc;
+      }, {}),
+    );
+
+    return res.status(200).json({
+      descricao:
+        "Consulta complexa equivalente a aggregate com $match, $project, $lookup e $group no MongoDB.",
+      filtros: {
+        situacao: situacao || null,
+      },
+      totalGrupos: agrupado.length,
+      totalMatriculas: matriculasDetalhadas.length,
+      dados: agrupado,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erro ao consultar matrículas agrupadas por situação.",
+      error: error.message,
+    });
+  }
+};
+
+export const getDisciplinasDetalhadas = async (req, res) => {
+  try {
+    const { nomeDisciplina, periodo } = req.query;
+
+    const nomeDisciplinaNormalizado = nomeDisciplina
+      ? nomeDisciplina.trim().toLowerCase()
+      : null;
+
+    const periodoNumero = periodo ? Number(periodo) : null;
+
+    const cursos = await Curso.scan().exec();
+    const matriculas = await Matricula.scan().exec();
+
+    const disciplinasExpandida = await Promise.all(
+      cursos.flatMap((curso) =>
+        (curso.disciplinas || []).map(async (disciplina) => {
+          const matriculasCurso = matriculas.filter(
+            (matricula) => matricula.cursoId === curso.id,
+          );
+
+          const alunosMatriculados = await Promise.all(
+            matriculasCurso.map(async (matricula) => {
+              const aluno = await Aluno.get(matricula.alunoId);
+
+              if (!aluno) {
+                return null;
+              }
+
+              return {
+                id: aluno.id,
+                nome: aluno.nome,
+                email: aluno.email,
+                status: aluno.status,
+                endereco: aluno.endereco,
+                numeroMatricula: matricula.numeroMatricula,
+                situacaoMatricula: matricula.situacao,
+              };
+            }),
+          );
+
+          return {
+            curso: {
+              id: curso.id,
+              nome: curso.nome,
+              modalidade: curso.modalidade,
+              turno: curso.turno,
+              status: curso.status,
+            },
+            disciplina: {
+              id: disciplina.id,
+              codigo: disciplina.codigo,
+              nome: disciplina.nome,
+              periodo: disciplina.periodo,
+              cargaHoraria: disciplina.cargaHoraria,
+              obrigatoria: disciplina.obrigatoria,
+              preRequisitos: disciplina.preRequisitos || [],
+            },
+            alunosMatriculados: alunosMatriculados.filter(Boolean),
+          };
+        }),
+      ),
+    );
+
+    const filtrado = disciplinasExpandida.filter((item) => {
+      const matchNome = nomeDisciplinaNormalizado
+        ? item.disciplina.nome.toLowerCase().includes(nomeDisciplinaNormalizado)
+        : true;
+
+      const matchPeriodo =
+        periodoNumero != null
+          ? item.disciplina.periodo === periodoNumero
+          : true;
+
+      return matchNome && matchPeriodo;
+    });
+
+    const agrupado = Object.values(
+      filtrado.reduce((acc, item) => {
+        const chave = item.disciplina.periodo;
+
+        if (!acc[chave]) {
+          acc[chave] = {
+            periodo: item.disciplina.periodo,
+            totalDisciplinas: 0,
+            disciplinas: [],
+          };
+        }
+
+        acc[chave].totalDisciplinas += 1;
+        acc[chave].disciplinas.push(item);
+
+        return acc;
+      }, {}),
+    ).sort((a, b) => a.periodo - b.periodo);
+
+    return res.status(200).json({
+      descricao:
+        "Consulta complexa equivalente a aggregate com $match, $project, $lookup, $unwind e $group no MongoDB, usando arrays e subdocumentos no DynamoDB.",
+      filtros: {
+        nomeDisciplina: nomeDisciplina || null,
+        periodo: periodo || null,
+      },
+      totalGrupos: agrupado.length,
+      totalDisciplinasEncontradas: filtrado.length,
+      dados: agrupado,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erro ao consultar disciplinas detalhadas.",
       error: error.message,
     });
   }

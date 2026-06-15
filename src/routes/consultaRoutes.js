@@ -6,6 +6,8 @@ import {
   getDisciplinasPorPeriodo,
   getCursosPorDisciplina,
   getAlunosPorEndereco,
+  getMatriculasAgrupadasPorSituacao,
+  getDisciplinasDetalhadas,
 } from "../controllers/consultaController.js";
 
 const router = Router();
@@ -123,5 +125,53 @@ router.get("/consultas/cursos-por-disciplina", getCursosPorDisciplina);
  *         description: É necessário informar ao menos um campo de endereço
  */
 router.get("/consultas/alunos-por-endereco", getAlunosPorEndereco);
+
+/**
+ * @swagger
+ * /api/consultas/matriculas-agrupadas-por-situacao:
+ *   get:
+ *     summary: Consulta complexa de matrículas agrupadas por situação
+ *     tags: [Consultas]
+ *     parameters:
+ *       - in: query
+ *         name: situacao
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [ATIVA, TRANCADA, CANCELADA, CONCLUIDA]
+ *         description: Filtra matrículas por situação
+ *     responses:
+ *       200:
+ *         description: Matrículas agrupadas por situação
+ */
+router.get(
+  "/consultas/matriculas-agrupadas-por-situacao",
+  getMatriculasAgrupadasPorSituacao,
+);
+
+/**
+ * @swagger
+ * /api/consultas/disciplinas-detalhadas:
+ *   get:
+ *     summary: Consulta complexa de disciplinas detalhadas com alunos matriculados
+ *     tags: [Consultas]
+ *     parameters:
+ *       - in: query
+ *         name: nomeDisciplina
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Nome parcial da disciplina
+ *       - in: query
+ *         name: periodo
+ *         required: false
+ *         schema:
+ *           type: number
+ *         description: Período da disciplina
+ *     responses:
+ *       200:
+ *         description: Disciplinas detalhadas agrupadas por período
+ */
+router.get("/consultas/disciplinas-detalhadas", getDisciplinasDetalhadas);
 
 export default router;
