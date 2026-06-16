@@ -63,6 +63,11 @@ const alunoSchema = new dynamoose.Schema(
       type: String,
       required: true,
       enum: ["ATIVO", "INATIVO", "FORMADO", "EVADIDO"],
+      index: {
+        name: "statusIndex",
+        type: "global",
+        project: true,
+      },
     },
     endereco: {
       type: Object,

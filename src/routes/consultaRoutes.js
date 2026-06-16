@@ -1,7 +1,9 @@
 import { Router } from "express";
 import {
   getMatriculasAtivas,
+  getAlunosAtivosResumoScan,
   getAlunosAtivosResumo,
+  compararAlunosAtivosResumo,
   getMatriculasDetalhadas,
   getDisciplinasPorPeriodo,
   getCursosPorDisciplina,
@@ -26,15 +28,42 @@ router.get("/consultas/matriculas-ativas", getMatriculasAtivas);
 
 /**
  * @swagger
+ * /api/consultas/alunos-ativos-resumo-scan:
+ *   get:
+ *     summary: Versão antiga da consulta de alunos ativos usando scan
+ *     tags: [Consultas]
+ *     responses:
+ *       200:
+ *         description: Resumo de alunos ativos usando scan
+ */
+router.get("/consultas/alunos-ativos-resumo-scan", getAlunosAtivosResumoScan);
+
+/**
+ * @swagger
  * /api/consultas/alunos-ativos-resumo:
  *   get:
- *     summary: Consulta equivalente ao aggregate com $match e $project do MongoDB
+ *     summary: Versão otimizada da consulta de alunos ativos usando query com GSI
  *     tags: [Consultas]
  *     responses:
  *       200:
  *         description: Resumo de alunos ativos
  */
 router.get("/consultas/alunos-ativos-resumo", getAlunosAtivosResumo);
+
+/**
+ * @swagger
+ * /api/consultas/alunos-ativos-resumo-comparativo:
+ *   get:
+ *     summary: Compara scan e query com índice na consulta de alunos ativos
+ *     tags: [Consultas]
+ *     responses:
+ *       200:
+ *         description: Comparativo entre consulta antiga e consulta otimizada
+ */
+router.get(
+  "/consultas/alunos-ativos-resumo-comparativo",
+  compararAlunosAtivosResumo,
+);
 
 /**
  * @swagger

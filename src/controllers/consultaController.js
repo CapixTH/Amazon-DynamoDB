@@ -2,6 +2,14 @@ import Aluno from "../models/Aluno.js";
 import Curso from "../models/Curso.js";
 import Matricula from "../models/Matricula.js";
 
+const mapAlunoAtivoResumo = (aluno) => ({
+  nome: aluno.nome,
+  email: aluno.email,
+  registroAcademico: aluno.registroAcademico,
+  status: aluno.status,
+  endereco: aluno.endereco,
+});
+
 export const getMatriculasAtivas = async (req, res) => {
   try {
     const matriculas = await Matricula.scan("situacao").eq("ATIVA").exec();
@@ -20,27 +28,87 @@ export const getMatriculasAtivas = async (req, res) => {
   }
 };
 
-export const getAlunosAtivosResumo = async (req, res) => {
+export const getAlunosAtivosResumoScan = async (req, res) => {
   try {
     const alunos = await Aluno.scan("status").eq("ATIVO").exec();
 
-    const resultado = alunos.map((aluno) => ({
-      nome: aluno.nome,
-      email: aluno.email,
-      registroAcademico: aluno.registroAcademico,
-      status: aluno.status,
-      endereco: aluno.endereco,
-    }));
+    const resultado = alunos.map(mapAlunoAtivoResumo);
 
     return res.status(200).json({
       descricao:
-        "Equivalente ao aggregate com $match e $project do MongoDB para listar apenas alguns campos dos alunos ativos.",
+        "Versão não otimizada: usa scan no campo status, percorrendo a tabela antes de filtrar alunos ativos.",
+      operacao: "scan",
+      total: resultado.length,
+      dados: resultado,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erro ao consultar resumo de alunos ativos com scan.",
+      error: error.message,
+    });
+  }
+};
+
+export const getAlunosAtivosResumo = async (req, res) => {
+  try {
+    const alunos = await Aluno.query("status")
+      .eq("ATIVO")
+      .using("statusIndex")
+      .exec();
+
+    const resultado = alunos.map(mapAlunoAtivoResumo);
+
+    return res.status(200).json({
+      descricao:
+        "Consulta otimizada com índice secundário global no campo status, equivalente ao aggregate com $match e $project do MongoDB.",
+      operacao: "query",
+      indice: "statusIndex",
       total: resultado.length,
       dados: resultado,
     });
   } catch (error) {
     return res.status(500).json({
       message: "Erro ao consultar resumo de alunos ativos.",
+      error: error.message,
+    });
+  }
+};
+
+export const compararAlunosAtivosResumo = async (req, res) => {
+  try {
+    const inicioScan = performance.now();
+    const alunosScan = await Aluno.scan("status").eq("ATIVO").exec();
+    const tempoScanMs = performance.now() - inicioScan;
+
+    const inicioQuery = performance.now();
+    const alunosQuery = await Aluno.query("status")
+      .eq("ATIVO")
+      .using("statusIndex")
+      .exec();
+    const tempoQueryMs = performance.now() - inicioQuery;
+
+    return res.status(200).json({
+      descricao:
+        "Comparação entre a versão antiga com scan e a versão otimizada com query usando o índice secundário global statusIndex.",
+      versaoAntiga: {
+        operacao: "scan",
+        usaIndice: false,
+        total: alunosScan.length,
+        tempoMs: Number(tempoScanMs.toFixed(3)),
+      },
+      versaoOtimizada: {
+        operacao: "query",
+        usaIndice: true,
+        indice: "statusIndex",
+        total: alunosQuery.length,
+        tempoMs: Number(tempoQueryMs.toFixed(3)),
+      },
+      observacao:
+        "Com poucos registros a diferença de tempo pode ser pequena. O ganho principal aparece com tabelas maiores, pois scan percorre a tabela e query acessa os itens pelo índice.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erro ao comparar consultas de alunos ativos.",
       error: error.message,
     });
   }
